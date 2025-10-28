@@ -1,5 +1,5 @@
 selenium
-openai
 requests
 schedule
 python-dotenv
+gTTS

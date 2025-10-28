@@ -19,7 +19,7 @@ def get_exclusions():
     try:
         with open("data/messaged_users.json", 'r') as f:
             messaged = json.load(f)
-    except FileNotFoundError:
+    except (FileNotFoundError, json.JSONDecodeError):
         messaged = []
         
     return set(excluded + messaged)
@@ -53,10 +53,15 @@ def process_candidates(browser, story_viewers):
 
 
         # Append to messaged users
-        with open("data/messaged_users.json", 'r+') as f:
-            messaged_users = json.load(f)
-            messaged_users.append(username)
-            f.seek(0)
+        try:
+            with open("data/messaged_users.json", 'r') as f:
+                messaged_users = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            messaged_users = []
+            
+        messaged_users.append(username)
+        
+        with open("data/messaged_users.json", 'w') as f:
             json.dump(messaged_users, f)
 
         # Anti-detection delays
@@ -73,10 +78,12 @@ def send_dm(browser, username, text, file_path):
     print(f"Attempting to send DM to {username}...")
     try:
         # Step 1: Navigate to user's profile
+        print("Navigating to profile...")
         browser.get(f"https://www.instagram.com/{username}/")
         time.sleep(5)
 
         # Step 2: Click the 'Message' button
+        print("Looking for the message button...")
         try:
             # Instagram has different layouts, try a few common selectors
             message_button = WebDriverWait(browser, 10).until(
@@ -90,21 +97,26 @@ def send_dm(browser, username, text, file_path):
             )
             message_button.click()
 
+        print("Message button clicked. Waiting for DM page to load...")
         time.sleep(5) # Wait for the DM page to load
 
         # Step 3: Send the text message
+        print("Looking for the text area...")
         text_area = WebDriverWait(browser, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//textarea[@placeholder]"))
+            EC.presence_of_element_located((By.XPATH, "//div[@aria-label='Message']"))
         )
         text_area.send_keys(text)
+        print("Text message sent.")
         time.sleep(2)
 
         # Step 4: Upload the voice note
+        print("Looking for the file input...")
         # The file input is hidden, so we need to use JavaScript to interact with it
         file_input = browser.find_element(By.CSS_SELECTOR, "input[type='file']")
         
         # Get the absolute path of the file
         absolute_file_path = os.path.abspath(file_path)
+        print(f"Uploading file: {absolute_file_path}")
         
         # Use JS to make the input visible and set the file
         browser.execute_script(
@@ -116,13 +128,15 @@ def send_dm(browser, username, text, file_path):
             file_input
         )
         file_input.send_keys(absolute_file_path)
+        print("File input sent.")
         
         # Wait for the upload to complete and the send button to be available
         time.sleep(5)
 
         # Step 5: Click the send button
+        print("Looking for the send button...")
         send_button = WebDriverWait(browser, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//div[text()='Send']"))
+            EC.element_to_be_clickable((By.XPATH, "//div[@role='button' and text()='Send']"))
         )
         send_button.click()
         
