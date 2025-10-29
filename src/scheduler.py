@@ -23,15 +23,7 @@ def job(username, password):
     print("Workflow finished.")
 
 def run_scheduler(username, password):
-    """Runs the scheduler."""
-    print("Scheduler started. Running the job for the first time...")
+    """Runs the job once."""
+    print("Scheduler started. Running the job once...")
     job(username, password)
-
-    # Schedule the job every 6 hours
-    schedule.every(6).hours.do(job, username, password)
-
-    print("Job has been run once. Subsequent runs will be every 6 hours.")
-
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    print("Job has finished.")

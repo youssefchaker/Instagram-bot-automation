@@ -48,7 +48,12 @@ def process_candidates(browser, story_viewers):
         voice_note_path = create_voice_note(message_text, username)
         
         if voice_note_path:
-            send_dm(browser, username, message_text, voice_note_path)
+            if send_dm(browser, username, message_text, voice_note_path):
+                try:
+                    os.remove(voice_note_path)
+                    print(f"Deleted local voice note: {voice_note_path}")
+                except OSError as e:
+                    print(f"Error deleting voice note file {voice_note_path}: {e}")
         else:
             print(f"Skipping DM to {username} because voice note creation failed.")
 
