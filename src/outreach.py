@@ -98,23 +98,42 @@ def send_dm(browser, username, text, file_path):
             print("No 'Turn on Notifications' popup found.")
             pass
 
-        # Step 2: Find the search bar and search for the user
+        # Step 2: Click on the 'New Message' button to open the search modal
+        print("Clicking on 'New Message' button...")
+        new_message_button = WebDriverWait(browser, 20).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[@role='button' and .//div[text()='New message']] | //div[contains(text(),'Send message')]"))
+        )
+        new_message_button.click()
+        time.sleep(random.uniform(2, 3))
+
+
+        # Step 3: Find the search bar and search for the user
         print(f"Searching for user '{username}'...")
         search_input = WebDriverWait(browser, 20).until(
-            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Search']"))
+            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Search...']"))
         )
         search_input.send_keys(username)
         time.sleep(random.uniform(2, 4))
 
-        # Step 3: Select the user from the results
+        # Step 4: Select the user from the results
         print("Selecting user from the list...")
-        user_result = WebDriverWait(browser, 20).until(
-            EC.element_to_be_clickable((By.XPATH, f"//span[text()='{username}']"))
+        # This XPath looks for a radio button that is followed by the username, which is more robust
+        user_result_radio = WebDriverWait(browser, 20).until(
+            EC.element_to_be_clickable((By.XPATH, f"//span[text()='{username}']/ancestor::div[@role='button']//div[@role='radio']"))
         )
-        user_result.click()
+        user_result_radio.click()
+        time.sleep(random.uniform(1, 2))
+
+        # Step 5: Click 'Chat' to open the conversation
+        print("Clicking 'Chat' button...")
+        chat_button = WebDriverWait(browser, 20).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[@role='button' and text()='Chat']"))
+        )
+        chat_button.click()
         time.sleep(random.uniform(4, 6))
 
-        # Step 4: Send the text message
+
+        # Step 6: Send the text message
         print("Sending text message...")
         message_input = WebDriverWait(browser, 20).until(
             EC.presence_of_element_located((By.XPATH, "//div[@aria-label='Message']"))
@@ -129,7 +148,7 @@ def send_dm(browser, username, text, file_path):
         print("Text message sent.")
         time.sleep(random.uniform(2, 3))
 
-        # Step 5: Upload the voice note
+        # Step 7: Upload the voice note
         print("Uploading voice note...")
         file_input = browser.find_element(By.XPATH, "//input[@type='file']")
         absolute_file_path = os.path.abspath(file_path)
