@@ -1,4 +1,5 @@
 import time
+import re
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
@@ -82,6 +83,19 @@ def scrape_profile(browser, username):
 
     profile_data = {"username": username}
     
+    # Scrape user_id
+    try:
+        page_source = browser.page_source
+        user_id_match = re.search(r'"profilePage_(\d+)"', page_source)
+        if user_id_match:
+            profile_data["user_id"] = user_id_match.group(1)
+        else:
+            profile_data["user_id"] = None
+            print(f"Could not find user_id for {username}.")
+    except Exception as e:
+        profile_data["user_id"] = None
+        print(f"An error occurred while scraping user_id for {username}: {e}")
+
     # Scrape display name
     try:
         display_name_element = browser.find_element(By.CSS_SELECTOR, "h2")

@@ -5,6 +5,7 @@ import os
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from src.scraper import scrape_profile
 from src.api_clients import generate_message, create_voice_note
 
@@ -77,74 +78,81 @@ def send_dm(browser, username, text, file_path):
     """Sends a DM with text and a voice note."""
     print(f"Attempting to send DM to {username}...")
     try:
-        # Step 1: Navigate to user's profile
-        print("Navigating to profile...")
-        browser.get(f"https://www.instagram.com/{username}/")
-        time.sleep(5)
+        # Step 1: Navigate to messages
+        print("Navigating to messages...")
+        messages_link = WebDriverWait(browser, 20).until(
+            EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, '/direct/inbox/')]"))
+        )
+        messages_link.click()
+        time.sleep(random.uniform(3, 5))
 
-        # Step 2: Click the 'Message' button
-        print("Looking for the message button...")
+        # Handle 'Turn on Notifications' popup
         try:
-            # Instagram has different layouts, try a few common selectors
-            message_button = WebDriverWait(browser, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//div[text()='Message']"))
+            not_now_button = WebDriverWait(browser, 5).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[text()='Not Now']"))
             )
-            message_button.click()
-        except:
-            # Fallback for different layouts
-            message_button = WebDriverWait(browser, 10).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "a[href*='/direct/t/']"))
-            )
-            message_button.click()
+            not_now_button.click()
+            print("Dismissed the 'Turn on Notifications' popup.")
+            time.sleep(2)
+        except (NoSuchElementException, TimeoutException):
+            print("No 'Turn on Notifications' popup found.")
+            pass
 
-        print("Message button clicked. Waiting for DM page to load...")
-        time.sleep(5) # Wait for the DM page to load
+        # Step 2: Find the search bar and search for the user
+        print(f"Searching for user '{username}'...")
+        search_input = WebDriverWait(browser, 20).until(
+            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Search']"))
+        )
+        search_input.send_keys(username)
+        time.sleep(random.uniform(2, 4))
 
-        # Step 3: Send the text message
-        print("Looking for the text area...")
-        text_area = WebDriverWait(browser, 10).until(
+        # Step 3: Select the user from the results
+        print("Selecting user from the list...")
+        user_result = WebDriverWait(browser, 20).until(
+            EC.element_to_be_clickable((By.XPATH, f"//span[text()='{username}']"))
+        )
+        user_result.click()
+        time.sleep(random.uniform(4, 6))
+
+        # Step 4: Send the text message
+        print("Sending text message...")
+        message_input = WebDriverWait(browser, 20).until(
             EC.presence_of_element_located((By.XPATH, "//div[@aria-label='Message']"))
         )
-        text_area.send_keys(text)
-        print("Text message sent.")
-        time.sleep(2)
-
-        # Step 4: Upload the voice note
-        print("Looking for the file input...")
-        # The file input is hidden, so we need to use JavaScript to interact with it
-        file_input = browser.find_element(By.CSS_SELECTOR, "input[type='file']")
+        message_input.send_keys(text)
+        time.sleep(random.uniform(1, 2))
         
-        # Get the absolute path of the file
-        absolute_file_path = os.path.abspath(file_path)
-        print(f"Uploading file: {absolute_file_path}")
-        
-        # Use JS to make the input visible and set the file
-        browser.execute_script(
-            "arguments[0].style.display = 'block'; " +
-            "arguments[0].style.visibility = 'visible'; " +
-            "arguments[0].style.height = '1px'; " +
-            "arguments[0].style.width = '1px'; " +
-            "arguments[0].style.opacity = 1;",
-            file_input
-        )
-        file_input.send_keys(absolute_file_path)
-        print("File input sent.")
-        
-        # Wait for the upload to complete and the send button to be available
-        time.sleep(5)
-
-        # Step 5: Click the send button
-        print("Looking for the send button...")
         send_button = WebDriverWait(browser, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//div[@role='button' and text()='Send']"))
         )
         send_button.click()
+        print("Text message sent.")
+        time.sleep(random.uniform(2, 3))
+
+        # Step 5: Upload the voice note
+        print("Uploading voice note...")
+        file_input = browser.find_element(By.XPATH, "//input[@type='file']")
+        absolute_file_path = os.path.abspath(file_path)
         
+        browser.execute_script(
+            "arguments[0].style.display = 'block'; arguments[0].style.visibility = 'visible';",
+            file_input
+        )
+        file_input.send_keys(absolute_file_path)
+        time.sleep(random.uniform(3, 5)) # Wait for upload
+
+        # After uploading, a send button for the attachment appears
+        print("Sending voice note...")
+        send_attachment_button = WebDriverWait(browser, 20).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[@role='button' and text()='Send']"))
+        )
+        send_attachment_button.click()
+        time.sleep(random.uniform(3, 5))
+
         print(f"Successfully sent DM to {username}")
         return True
 
     except Exception as e:
         print(f"An error occurred while sending DM to {username}: {e}")
-        # Take a screenshot for debugging
         browser.save_screenshot(f"data/dm_error_{username}.png")
         return False
