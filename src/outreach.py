@@ -115,13 +115,12 @@ def send_dm(browser, username, text, file_path):
         search_input.send_keys(username)
         time.sleep(random.uniform(2, 4))
 
-        # Step 4: Select the user from the results
-        print("Selecting user from the list...")
-        # This XPath looks for a radio button that is followed by the username, which is more robust
-        user_result_radio = WebDriverWait(browser, 20).until(
-            EC.element_to_be_clickable((By.XPATH, f"//span[text()='{username}']/ancestor::div[@role='button']//div[@role='radio']"))
+        # Step 4: Select the first user from the results
+        print("Selecting the first user from the list...")
+        first_user_result = WebDriverWait(browser, 20).until(
+            EC.element_to_be_clickable((By.XPATH, "(//div[@role='button' and .//input[@name='ContactSearchResultCheckbox']])[1]"))
         )
-        user_result_radio.click()
+        first_user_result.click()
         time.sleep(random.uniform(1, 2))
 
         # Step 5: Click 'Chat' to open the conversation
@@ -132,23 +131,7 @@ def send_dm(browser, username, text, file_path):
         chat_button.click()
         time.sleep(random.uniform(4, 6))
 
-
-        # Step 6: Send the text message
-        print("Sending text message...")
-        message_input = WebDriverWait(browser, 20).until(
-            EC.presence_of_element_located((By.XPATH, "//div[@aria-label='Message']"))
-        )
-        message_input.send_keys(text)
-        time.sleep(random.uniform(1, 2))
-        
-        send_button = WebDriverWait(browser, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//div[@role='button' and text()='Send']"))
-        )
-        send_button.click()
-        print("Text message sent.")
-        time.sleep(random.uniform(2, 3))
-
-        # Step 7: Upload the voice note
+        # Step 6: Upload the voice note
         print("Uploading voice note...")
         file_input = browser.find_element(By.XPATH, "//input[@type='file']")
         absolute_file_path = os.path.abspath(file_path)
