@@ -15,6 +15,8 @@ def job(username, password):
             story_viewers = get_story_viewers(browser, username)
             if story_viewers:
                 process_candidates(browser, story_viewers)
+            else:
+                print("No story viewers found. Exiting.")
     except Exception as e:
         print(f"An error occurred during the workflow: {e}")
     finally:
