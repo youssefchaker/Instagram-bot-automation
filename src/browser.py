@@ -40,7 +40,7 @@ def handle_popups(browser):
     try:
         element = browser.find_element("xpath", selector)
         element.click()
-        print(f"Clicked element with selector: {selector}")
+        print("Dismissed Login popup")
         time.sleep(2)
     except:
         pass

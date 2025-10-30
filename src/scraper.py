@@ -4,51 +4,34 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
-def get_story_viewers(browser, username):
-    """Navigates to the story and scrapes all viewers from the story viewers list."""
+def _get_viewers_for_current_story(browser):
+    """Scrapes all viewers from the currently visible story."""
+    time.sleep(2)
     try:
-        # Navigate directly to the user's stories
-        story_url = f"https://www.instagram.com/stories/{username}/"
-        print(f"Navigating to stories at {story_url}...")
-        browser.get(story_url)
-        
-        wait = WebDriverWait(browser, 15)
-
-        # Wait for the story to load and find the viewers link at the bottom.
+        wait = WebDriverWait(browser, 10)
         viewers_selector = "//*[contains(text(), 'Seen by')] | //*[contains(text(), 'Activity')] | //div[@role='button' and contains(., 'viewers')]"
         
         viewers_link = wait.until(EC.element_to_be_clickable((By.XPATH, viewers_selector)))
         
-        print("Found viewers link/area. Clicking to open the viewers list.")
+        print("Clicking to open the viewers list.")
         viewers_link.click()
         time.sleep(3)
 
     except (NoSuchElementException, TimeoutException):
-        print("No active story found, or the viewers link could not be located.")
-        try:
-            browser.find_element(By.XPATH, "//*[contains(text(), 'No viewers yet')]")
-            print("Story has no viewers yet.")
-        except NoSuchElementException:
-            pass
-        return []
-    except Exception as e:
-        print(f"An unexpected error occurred while trying to navigate to story viewers: {e}")
-        return []
+        print("Could not find viewers link for the current story.")
+        return set()
 
-    # Now that the viewers list is open, proceed with scraping
     try:
-        print("Looking for the story viewers list scroll container...")
         scroll_container_selector = "div[style*='overflow: hidden auto']"
         scroll_container = browser.find_element(By.CSS_SELECTOR, scroll_container_selector)
-        print("Found the scrollable container.")
-
+        
         viewers = set()
         last_height = browser.execute_script("return arguments[0].scrollHeight", scroll_container)
         
-        print("Scrolling to load all viewers...")
         while True:
-            # Find all usernames currently visible
             username_links = scroll_container.find_elements(By.XPATH, ".//a[contains(@href, '/') and string-length(@href) > 2 and not(contains(@href, 'stories'))]")
             
             for link in username_links:
@@ -61,18 +44,57 @@ def get_story_viewers(browser, username):
             browser.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", scroll_container)
             time.sleep(2)
 
-            # Check if we've reached the bottom
             new_height = browser.execute_script("return arguments[0].scrollHeight", scroll_container)
             if new_height == last_height:
                 break
             last_height = new_height
         
-        print(f"Found {len(viewers)} unique story viewers.")
-        return list(viewers)
+        # Close the viewers list by pressing Escape
+        try:
+            print("Closing viewers list...")
+            ActionChains(browser).send_keys(Keys.ESCAPE).perform()
+            time.sleep(2)
+        except Exception as e:
+            print(f"Could not close viewers list with Escape key: {e}")
+
+        return viewers
 
     except Exception as e:
-        print(f"An error occurred while scraping story viewers: {e}")
-        return []
+        print(f"An error occurred while scraping viewers for the current story: {e}")
+        return set()
+
+def get_story_viewers(browser, username):
+    """Navigates to the stories and scrapes all viewers from all stories."""
+    story_url = f"https://www.instagram.com/stories/{username}/"
+    print(f"Navigating to stories...")
+    browser.get(story_url)
+    all_viewers = set()
+    story_index = 1
+
+    while True:
+        print(f"Processing story {story_index}...")
+        current_viewers = _get_viewers_for_current_story(browser)
+        if current_viewers:
+            all_viewers.update(current_viewers)
+            print(f"Found {len(current_viewers)} viewers for this story. Total unique viewers so far: {len(all_viewers)}")
+        else:
+            print("No viewers found for this story.")
+
+        try:
+            next_button_selector = "//div[@role='button' and .//svg[@aria-label='Next']]"
+            next_button = WebDriverWait(browser, 2).until(
+                EC.element_to_be_clickable((By.XPATH, next_button_selector))
+            )
+            print("Found 'Next Story' button. Clicking...")
+            next_button.click()
+            time.sleep(3)
+            story_index += 1
+        except (NoSuchElementException, TimeoutException):
+            print("No more stories found.")
+            break
+            
+    print(f"Finished processing all stories. Found a total of {len(all_viewers)} unique viewers.")
+    return list(all_viewers)
 
 def scrape_profile(browser, username):
     """Scrapes signals from a user's profile."""
