@@ -37,7 +37,6 @@ def process_candidates(browser, story_viewers):
         if not profile_data:
             continue
 
-        # Save snapshot
         with open(f"data/{username}_profile.json", 'w') as f:
             json.dump(profile_data, f, indent=4)
             
@@ -71,13 +70,15 @@ def process_candidates(browser, story_viewers):
             json.dump(messaged_users, f)
 
         # Anti-detection delays
-        if (i + 1) % 10 == 0:
-            cooldown = random.randint(600, 1800) # 10-30 min cooldown
-            print(f"Cooldown for {cooldown/60} minutes...")
-            time.sleep(cooldown)
-        else:
-            delay = random.randint(60, 180) # 1-3 min delay
-            time.sleep(delay)
+        if i < len(candidates) - 1:
+            if (i + 1) % 10 == 0:
+                cooldown = random.randint(600, 1800)
+                print(f"Cooldown for {cooldown/60} minutes...")
+                time.sleep(cooldown)
+            else:
+                delay = random.randint(60, 180)
+                print(f"Waiting for {delay} seconds before processing the next candidate...")
+                time.sleep(delay)
 
 def send_dm(browser, username, text, file_path):
     """Sends a DM with text and a voice note."""
@@ -157,9 +158,21 @@ def send_dm(browser, username, text, file_path):
         time.sleep(random.uniform(3, 5))
 
         print(f"Successfully sent DM to {username}")
+        
+        # Navigate back to home page to be ready for the next user
+        print("Navigating back to home page...")
+        browser.get("https://www.instagram.com/")
+        time.sleep(random.uniform(3, 5))
+
         return True
 
     except Exception as e:
         print(f"An error occurred while sending DM to {username}: {e}")
         browser.save_screenshot(f"data/dm_error_{username}.png")
+
+        # Also navigate back to home page on error to try to recover
+        print("Navigating back to home page after error...")
+        browser.get("https://www.instagram.com/")
+        time.sleep(random.uniform(3, 5))
+        
         return False

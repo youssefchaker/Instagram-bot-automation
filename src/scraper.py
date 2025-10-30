@@ -22,7 +22,7 @@ def get_story_viewers(browser, username):
         
         print("Found viewers link/area. Clicking to open the viewers list.")
         viewers_link.click()
-        time.sleep(3) # Wait for the viewers list to slide up
+        time.sleep(3)
 
     except (NoSuchElementException, TimeoutException):
         print("No active story found, or the viewers link could not be located.")
@@ -54,14 +54,12 @@ def get_story_viewers(browser, username):
             for link in username_links:
                 href = link.get_attribute('href')
                 if href:
-                    # Extracts username from URL like: https://www.instagram.com/username/
                     username = href.split('/')[-2]
                     if username:
                         viewers.add(username)
 
-            # Scroll down
             browser.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", scroll_container)
-            time.sleep(2)  # Wait for new viewers to load
+            time.sleep(2)
 
             # Check if we've reached the bottom
             new_height = browser.execute_script("return arguments[0].scrollHeight", scroll_container)

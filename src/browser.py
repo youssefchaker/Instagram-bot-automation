@@ -35,7 +35,7 @@ def login(browser, username, password):
 
 def handle_popups(browser):
     """Handles common pop-ups after login by trying a list of selectors."""
-    time.sleep(1) # Wait for popups
+    time.sleep(1)
     selector="//div[@role='button' and text()='OK']"
     try:
         element = browser.find_element("xpath", selector)
