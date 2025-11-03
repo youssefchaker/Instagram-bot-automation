@@ -1,5 +1,4 @@
 import requests
-import urllib.parse
 
 
 def generate_message(profile_json):
@@ -7,7 +6,7 @@ def generate_message(profile_json):
     prompt = f"""
     Based on the following user profile data, generate a friendly 3-4 line intro text.
     Acknowledge that I saw them in my story viewers, add one small personal touch based on their profile, and have a soft, friendly closing question.
-    Keep it casual and not salesy.
+    Keep it casual and not salesy and do not appear creepy or stalky(do not mention the number of followers or any specific details that would indicate deep stalking).
 
     Profile Data:
     {profile_json}

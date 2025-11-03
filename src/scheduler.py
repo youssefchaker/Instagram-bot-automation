@@ -7,7 +7,7 @@ from .outreach import process_candidates
 
 def job(username, password):
     """The main job to be scheduled."""
-    print("Starting Instagram outreach workflow...")
+    print("Starting Instagram outreach process...")
     browser = None
     try:
         browser = get_browser()
@@ -22,10 +22,9 @@ def job(username, password):
     finally:
         if browser:
             browser.quit()
-    print("Workflow finished.")
+    print("Process finished.")
 
 def run_scheduler(username, password):
     """Runs the job once."""
-    print("Scheduler started. Running the job once...")
     job(username, password)
-    print("Job has finished.")
+    print("Process has finished.")

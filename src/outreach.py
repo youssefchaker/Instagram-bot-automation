@@ -98,10 +98,10 @@ def send_dm(browser, username, text, file_path):
                 EC.element_to_be_clickable((By.XPATH, "//button[text()='Not Now']"))
             )
             not_now_button.click()
-            print("Dismissed the 'Turn on Notifications' popup.")
+            print("Dismissed the notifications popup.")
             time.sleep(2)
         except (NoSuchElementException, TimeoutException):
-            print("No 'Turn on Notifications' popup found.")
+            print("No notifications popup found.")
             pass
 
         # Step 2: Click on the 'New Message' button to open the search modal

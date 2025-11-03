@@ -83,14 +83,14 @@ def get_story_viewers(browser, username):
 
         # Check if we are still in stories before advancing
         if f"/stories/" not in browser.current_url:
-            print("Exited story view after scraping.")
+            print("Exited story after scraping.")
             break
 
-        print("Advancing to next story with right arrow key...")
+        print("Advancing to next story...")
         ActionChains(browser).send_keys(Keys.ARROW_RIGHT).perform()
         story_index += 1
 
-    print(f"Finished processing all stories. Found a total of {len(all_viewers)} unique viewers.")
+    print(f"Finished processing all stories. Found a total of {len(all_viewers)} viewers.")
     return list(all_viewers)
 
 def scrape_profile(browser, username):
