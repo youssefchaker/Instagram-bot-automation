@@ -18,7 +18,7 @@ def _get_viewers_for_current_story(browser):
         
         print("Clicking to open the viewers list.")
         viewers_link.click()
-        time.sleep(3)
+        time.sleep(2)
 
     except (NoSuchElementException, TimeoutException):
         print("Could not find viewers link for the current story.")
@@ -53,7 +53,6 @@ def _get_viewers_for_current_story(browser):
         try:
             print("Closing viewers list...")
             ActionChains(browser).send_keys(Keys.ESCAPE).perform()
-            time.sleep(2)
         except Exception as e:
             print(f"Could not close viewers list with Escape key: {e}")
 
@@ -71,8 +70,10 @@ def get_story_viewers(browser, username):
     all_viewers = set()
     story_index = 1
 
-    while True:
+    # Loop as long as we are in the story view
+    while f"/stories/" in browser.current_url:
         print(f"Processing story {story_index}...")
+
         current_viewers = _get_viewers_for_current_story(browser)
         if current_viewers:
             all_viewers.update(current_viewers)
@@ -80,26 +81,22 @@ def get_story_viewers(browser, username):
         else:
             print("No viewers found for this story.")
 
-        try:
-            next_button_selector = "//div[@role='button' and .//svg[@aria-label='Next']]"
-            next_button = WebDriverWait(browser, 2).until(
-                EC.element_to_be_clickable((By.XPATH, next_button_selector))
-            )
-            print("Found 'Next Story' button. Clicking...")
-            next_button.click()
-            time.sleep(3)
-            story_index += 1
-        except (NoSuchElementException, TimeoutException):
-            print("No more stories found.")
+        # Check if we are still in stories before advancing
+        if f"/stories/" not in browser.current_url:
+            print("Exited story view after scraping.")
             break
-            
+
+        print("Advancing to next story with right arrow key...")
+        ActionChains(browser).send_keys(Keys.ARROW_RIGHT).perform()
+        story_index += 1
+
     print(f"Finished processing all stories. Found a total of {len(all_viewers)} unique viewers.")
     return list(all_viewers)
 
 def scrape_profile(browser, username):
     """Scrapes signals from a user's profile."""
     browser.get(f"https://www.instagram.com/{username}/")
-    time.sleep(5)
+    time.sleep(2)
 
     profile_data = {"username": username}
     
