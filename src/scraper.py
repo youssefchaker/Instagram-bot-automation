@@ -65,8 +65,14 @@ def _get_viewers_for_current_story(browser):
 def get_story_viewers(browser, username):
     """Navigates to the stories and scrapes all viewers from all stories."""
     story_url = f"https://www.instagram.com/stories/{username}/"
-    print(f"Navigating to stories...")
+    print("Navigating to stories...")
     browser.get(story_url)
+    time.sleep(1)  # Wait for page to load and potentially redirect
+
+    if f"/stories/" not in browser.current_url:
+        print("No stories available for this user.")
+        return []
+
     all_viewers = set()
     story_index = 1
 
@@ -88,6 +94,7 @@ def get_story_viewers(browser, username):
 
         print("Advancing to next story...")
         ActionChains(browser).send_keys(Keys.ARROW_RIGHT).perform()
+        time.sleep(1) # Wait for next story to load
         story_index += 1
 
     print(f"Finished processing all stories. Found a total of {len(all_viewers)} viewers.")

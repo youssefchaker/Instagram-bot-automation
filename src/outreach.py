@@ -10,7 +10,7 @@ from src.scraper import scrape_profile
 from src.api_clients import generate_message, create_voice_note
 
 def get_exclusions():
-    """Loads excluded and already messaged users."""
+    """Loads excluded and already scraped users."""
     try:
         with open("data/excluded_usernames.txt", 'r') as f:
             excluded = [line.strip() for line in f]
@@ -18,34 +18,43 @@ def get_exclusions():
         excluded = []
 
     try:
-        with open("data/messaged_users.json", 'r') as f:
-            messaged = json.load(f)
+        with open("data/scraped_users.json", 'r') as f:
+            scraped_users = json.load(f)
+            scraped_usernames = [user['username'] for user in scraped_users]
     except (FileNotFoundError, json.JSONDecodeError):
-        messaged = []
-        
-    return set(excluded + messaged)
+        scraped_usernames = []
+
+    return set(excluded + scraped_usernames)
 
 def process_candidates(browser, story_viewers):
     """Processes each candidate user."""
     exclusions = get_exclusions()
     candidates = [user for user in story_viewers if user not in exclusions]
-    
+
+    try:
+        with open("data/scraped_users.json", 'r') as f:
+            scraped_users = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        scraped_users = []
+
     for i, username in enumerate(candidates):
         print(f"Processing candidate {i+1}/{len(candidates)}: {username}")
-        
+
         profile_data = scrape_profile(browser, username)
         if not profile_data:
             continue
 
-        with open(f"data/{username}_profile.json", 'w') as f:
-            json.dump(profile_data, f, indent=4)
-            
+        scraped_users.append(profile_data)
+
+        with open("data/scraped_users.json", 'w') as f:
+            json.dump(scraped_users, f, indent=4)
+
         message_text = generate_message(json.dumps(profile_data, indent=4))
         if not message_text:
             continue
-            
+
         voice_note_path = create_voice_note(message_text, username)
-        
+
         if voice_note_path:
             if send_dm(browser, username, message_text, voice_note_path):
                 try:
@@ -53,21 +62,11 @@ def process_candidates(browser, story_viewers):
                     print(f"Deleted local voice note: {voice_note_path}")
                 except OSError as e:
                     print(f"Error deleting voice note file {voice_note_path}: {e}")
+            else:
+                print(f"Skipping DM to {username} because sending failed.")
         else:
             print(f"Skipping DM to {username} because voice note creation failed.")
 
-
-        # Append to messaged users
-        try:
-            with open("data/messaged_users.json", 'r') as f:
-                messaged_users = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            messaged_users = []
-            
-        messaged_users.append(username)
-        
-        with open("data/messaged_users.json", 'w') as f:
-            json.dump(messaged_users, f)
 
         # Anti-detection delays
         if i < len(candidates) - 1:

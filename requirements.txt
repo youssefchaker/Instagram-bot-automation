@@ -3,3 +3,6 @@ requests
 schedule
 python-dotenv
 gTTS
+Django
+django-crispy-forms
+crispy-bootstrap5
