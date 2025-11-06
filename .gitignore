@@ -16,3 +16,4 @@ venv/
 *.json
 *.mp3
 data/*.txt
+*.sqlite3
