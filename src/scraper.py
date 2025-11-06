@@ -49,7 +49,6 @@ def _get_viewers_for_current_story(browser):
                 break
             last_height = new_height
         
-        # Close the viewers list by pressing Escape
         try:
             print("Closing viewers list...")
             ActionChains(browser).send_keys(Keys.ESCAPE).perform()
@@ -67,7 +66,7 @@ def get_story_viewers(browser, username):
     story_url = f"https://www.instagram.com/stories/{username}/"
     print("Navigating to stories...")
     browser.get(story_url)
-    time.sleep(1)  # Wait for page to load and potentially redirect
+    time.sleep(1)
 
     if f"/stories/" not in browser.current_url:
         print("No stories available for this user.")
@@ -94,7 +93,7 @@ def get_story_viewers(browser, username):
 
         print("Advancing to next story...")
         ActionChains(browser).send_keys(Keys.ARROW_RIGHT).perform()
-        time.sleep(1) # Wait for next story to load
+        time.sleep(1)
         story_index += 1
 
     print(f"Finished processing all stories. Found a total of {len(all_viewers)} viewers.")

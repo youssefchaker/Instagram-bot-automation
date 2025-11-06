@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -10,9 +11,6 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-        
-        # For now, we'll just store the credentials in the session
-        # In a real application, you'd want to properly authenticate
         request.session['instagram_username'] = username
         request.session['instagram_password'] = password
                 
@@ -24,11 +22,9 @@ def login_view(request):
         
         
 def logout_view(request):
-    # Clear the session
     request.session.flush()
     
-    # Clear the scraped_users.json file
-    data_file_path = 'c:\\Users\\Youssef.Chaker\\Desktop\\Instagram-bot-automation\\data\\scraped_users.json'
+    data_file_path = os.path.join(settings.BASE_DIR, '..', 'data', 'scraped_users.json')
     with open(data_file_path, 'w') as f:
         json.dump([], f)
         
@@ -40,7 +36,7 @@ def dashboard(request):
     if 'instagram_username' not in request.session:
         return redirect('outreach:login')
 
-    data_file_path = 'c:\\Users\\Youssef.Chaker\\Desktop\\Instagram-bot-automation\\data\\scraped_users.json'
+    data_file_path = os.path.join(settings.BASE_DIR, '..', 'data', 'scraped_users.json')
     try:
         with open(data_file_path, 'r') as f:
             users = json.load(f)
@@ -54,9 +50,9 @@ def run_outreach(request):
 
     try:
         subprocess.run(
-            ['c:\\Users\\Youssef.Chaker\\Desktop\\Instagram-bot-automation\\insta-bot-venv\\Scripts\\python.exe', 'main.py'],
+            [os.path.join(settings.BASE_DIR, '..', 'insta-bot-venv', 'Scripts', 'python.exe'), 'main.py'],
             check=True,
-            cwd='c:\\Users\\Youssef.Chaker\\Desktop\\Instagram-bot-automation',
+            cwd=os.path.join(settings.BASE_DIR, '..'),
             env={
                 **os.environ,
                 'INSTAGRAM_USERNAME': request.session['instagram_username'],
@@ -71,7 +67,7 @@ def clear_users(request):
     if 'instagram_username' not in request.session:
         return redirect('outreach:login')
 
-    data_file_path = 'c:\\Users\\Youssef.Chaker\\Desktop\\Instagram-bot-automation\\data\\scraped_users.json'
+    data_file_path = os.path.join(settings.BASE_DIR, '..', 'data', 'scraped_users.json')
     with open(data_file_path, 'w') as f:
         json.dump([], f)
     base_url = reverse('outreach:dashboard')
@@ -82,7 +78,7 @@ def remove_user(request, username):
     if 'instagram_username' not in request.session:
         return redirect('outreach:login')
 
-    data_file_path = 'c:\\Users\\Youssef.Chaker\\Desktop\\Instagram-bot-automation\\data\\scraped_users.json'
+    data_file_path = os.path.join(settings.BASE_DIR, '..', 'data', 'scraped_users.json')
     try:
         with open(data_file_path, 'r') as f:
             users = json.load(f)
